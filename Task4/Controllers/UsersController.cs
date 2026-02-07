@@ -12,10 +12,9 @@ public class UsersController : Controller
         db = context;
     }
 
-    // список пользователей
     public async Task<IActionResult> Index(int page = 1)
     {
-        const int pageSize = 50;
+        const int pageSize = 15;
 
         var totalUsers = await db.Users.CountAsync();
 
@@ -31,7 +30,6 @@ public class UsersController : Controller
         return View(users);
     }
 
-    // BLOCK
     [HttpPost]
     public async Task<IActionResult> Block(Guid[] userIds)
     {
@@ -51,7 +49,6 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // UNBLOCK
     [HttpPost]
     public async Task<IActionResult> Unblock(Guid[] userIds)
     {
@@ -72,7 +69,6 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // DELETE
     [HttpPost]
     public async Task<IActionResult> Delete(Guid[] userIds)
     {
@@ -90,7 +86,6 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // DELETE UNVERIFIED
     [HttpPost]
     public async Task<IActionResult> DeleteUnverified()
     {

@@ -11,10 +11,21 @@
         <a href="/Account/Logout" class="btn btn-outline-secondary">Logout</a>
     </div>
 
+    <!-- TOAST -->
     @if (TempData["msg"] != null)
     {
-        <div class="alert alert-info text-center">
-            @TempData["msg"]
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="mainToast" class="toast align-items-center text-bg-dark border-0">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        @TempData["msg"]
+                    </div>
+                    <button type="button"
+                            class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast">
+                    </button>
+                </div>
+            </div>
         </div>
     }
 
@@ -23,28 +34,36 @@
         <!-- TOOLBAR -->
         <div class="toolbar mb-3 d-flex gap-2">
 
-            <button type="submit" name="action" value="block"
-                    class="btn btn-light toolbar-btn"
-                    title="Block selected users">
-                🛑 <span>Block</span>
+            <!-- ВСЕГДА АКТИВНА -->
+            <button formaction="/Users/Block"
+                    class="btn btn-danger"
+                    id="btnBlock">
+                Block
             </button>
 
-            <button type="submit" name="action" value="unblock"
+            <!-- АКТИВНА ТОЛЬКО ЕСЛИ ВЫБРАНЫ -->
+            <button formaction="/Users/Unblock"
                     class="btn btn-light toolbar-btn"
-                    title="Unblock selected users">
-                🔓 <span>Unblock</span>
+                    id="btnUnblock"
+                    disabled
+                    title="Unblock users">
+                <img src="/images/unblock.png" />
             </button>
 
-            <button type="submit" name="action" value="delete"
+            <button formaction="/Users/Delete"
                     class="btn btn-light toolbar-btn"
-                    title="Delete selected users">
-                🗑 <span>Delete</span>
+                    id="btnDelete"
+                    disabled
+                    title="Delete users">
+                <img src="/images/delete.png" />
             </button>
 
-            <button type="submit" name="action" value="delete_unverified"
+            <!-- ВСЕГДА АКТИВНА -->
+            <button formaction="/Users/DeleteUnverified"
                     class="btn btn-light toolbar-btn"
-                    title="Delete all unverified users">
-                ⚠ <span>Delete unverified</span>
+                    id="btnDeleteUnverified"
+                    title="Delete unverified users">
+                <img src="/images/trash.png" />
             </button>
 
         </div>
@@ -68,7 +87,10 @@
                 {
                     <tr>
                         <td>
-                            <input type="checkbox" name="userIds" value="@u.Id" class="user-checkbox" />
+                            <input type="checkbox"
+                                   name="userIds"
+                                   value="@u.Id"
+                                   class="user-checkbox" />
                         </td>
                         <td>@u.Name</td>
                         <td>@u.Email</td>
@@ -119,12 +141,60 @@
 
 </div>
 
+<style>
+    .toolbar-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 38px;
+        padding: 0;
+    }
+
+        .toolbar-btn img {
+            height: 18px;
+        }
+</style>
+
 @section Scripts {
     <script>
-        document.getElementById("selectAll").addEventListener("change", function () {
-            document.querySelectorAll(".user-checkbox").forEach(cb => {
-                cb.checked = this.checked;
+
+        const checkboxes = document.querySelectorAll(".user-checkbox");
+        const selectAll = document.getElementById("selectAll");
+
+        const btnUnblock = document.getElementById("btnUnblock");
+        const btnDelete = document.getElementById("btnDelete");
+
+        function updateToolbarState() {
+            let anyChecked = false;
+
+            checkboxes.forEach(cb => {
+                if (cb.checked) anyChecked = true;
             });
+
+            btnUnblock.disabled = !anyChecked;
+            btnDelete.disabled = !anyChecked;
+        }
+
+        // select all
+        selectAll.addEventListener("change", function () {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateToolbarState();
         });
+
+        // individual checkbox
+        checkboxes.forEach(cb => {
+            cb.addEventListener("change", updateToolbarState);
+        });
+
+        // toast init
+        document.addEventListener("DOMContentLoaded", function () {
+            const toastEl = document.getElementById('mainToast');
+            if (toastEl) {
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        });
+
     </script>
 }

@@ -1,114 +1,134 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using Task4.Data;
 using Task4.Models;
-using Task4.ViewModels;
-
-namespace Task4.Controllers;
+using System.Security.Cryptography;
+using System.Text;
+using Task4.Data;
 
 public class AccountController : Controller
 {
-    private readonly ApplicationDbContext _db;
+    private readonly ApplicationDbContext db;
 
-    public AccountController(ApplicationDbContext db)
+    public AccountController(ApplicationDbContext context)
     {
-        _db = db;
+        db = context;
     }
 
-    public IActionResult Login() => View();
+    private string HashPassword(string password)
+    {
+        using var sha = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(password);
+        var hash = sha.ComputeHash(bytes);
+        return Convert.ToBase64String(hash);
+    }
+
+    public IActionResult Login()
+    {
+        return View();
+    }
 
     [HttpPost]
-    public async Task<IActionResult> Login(LoginViewModel model)
+    public async Task<IActionResult> Login(string email, string password)
     {
-        if (!ModelState.IsValid)
-            return View(model);
+        var hash = HashPassword(password);
 
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+        var user = await db.Users
+            .FirstOrDefaultAsync(x => x.Email == email && x.PasswordHash == hash);
 
-        if (user == null || user.PasswordHash != model.Password || user.Status == UserStatus.Blocked)
+        if (user == null)
         {
-            ModelState.AddModelError("", "Invalid credentials");
-            return View(model);
+            ViewBag.Error = "Invalid email or password";
+            return View();
         }
 
+        if (user.Status == UserStatus.Blocked)
+        {
+            ViewBag.Error = "User is blocked";
+            return View();
+        }
+
+        HttpContext.Session.SetString("UserId", user.Id.ToString());
+
         user.LastLoginAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
-
-        var claims = new[] { new Claim(ClaimTypes.Name, user.Email) };
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity));
+        await db.SaveChangesAsync();
 
         return RedirectToAction("Index", "Users");
     }
 
-    public IActionResult Register() => View();
-
-    [HttpPost]
-    public async Task<IActionResult> Register(RegisterViewModel model)
+    public IActionResult Logout()
     {
-        if (!ModelState.IsValid)
-            return View(model);
-
-        var user = new User
-        {
-            Name = model.Name,
-            Email = model.Email,
-            PasswordHash = model.Password,
-            EmailConfirmToken = Guid.NewGuid().ToString()
-        };
-
-        try
-        {
-            _db.Users.Add(user);
-            await _db.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            ModelState.AddModelError("", "Email already exists");
-            return View(model);
-        }
-
-        var link = Url.Action(
-            "ConfirmEmail",
-            "Account",
-            new { token = user.EmailConfirmToken },
-            Request.Scheme
-        );
-
-        _ = Services.EmailService.SendAsync(user.Email, link!);
-
+        HttpContext.Session.Clear();
         return RedirectToAction("Login");
     }
 
-    public async Task<IActionResult> ConfirmEmail(string token)
+    public IActionResult Register()
     {
-        if (string.IsNullOrEmpty(token))
-            return RedirectToAction("Login");
+        return View();
+    }
 
-        var user = await _db.Users
-            .FirstOrDefaultAsync(u => u.EmailConfirmToken == token);
+    [HttpPost]
+    public async Task<IActionResult> Register(string name, string email, string password)
+    {
+        if (string.IsNullOrWhiteSpace(name) ||
+            string.IsNullOrWhiteSpace(email) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            ViewBag.Error = "Fill all fields";
+            return View();
+        }
+
+        if (await db.Users.AnyAsync(x => x.Email == email))
+        {
+            ViewBag.Error = "Email already exists";
+            return View();
+        }
+
+        var token = Guid.NewGuid().ToString();
+
+        var user = new User
+        {
+            Name = name,
+            Email = email,
+            PasswordHash = HashPassword(password),
+            Status = UserStatus.Unverified,
+            EmailConfirmToken = token,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var confirmLink = Url.Action(
+            "ConfirmEmail",
+            "Account",
+            new { userId = user.Id, token = token },
+            Request.Scheme);
+
+        ViewBag.Success = "Registration successful!";
+        ViewBag.ConfirmLink = confirmLink;
+
+        return View();
+    }
+
+    public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
+    {
+        var user = await db.Users
+            .FirstOrDefaultAsync(x =>
+                x.Id == userId &&
+                x.EmailConfirmToken == token);
 
         if (user == null)
-            return RedirectToAction("Login");
+            return RedirectToAction("Register");
 
         if (user.Status != UserStatus.Blocked)
             user.Status = UserStatus.Active;
 
         user.EmailConfirmToken = null;
-        await _db.SaveChangesAsync();
 
-        return RedirectToAction("Login");
-    }
+        await db.SaveChangesAsync();
 
-    public async Task<IActionResult> Logout()
-    {
-        await HttpContext.SignOutAsync();
+        TempData["msg"] = "Email verified successfully. You can login.";
+
         return RedirectToAction("Login");
     }
 }
