@@ -1,0 +1,28 @@
+﻿@{
+    ViewBag.Title = "Login";
+}
+
+<div class="auth-card">
+
+    <h4 class="text-center mb-4">Login</h4>
+
+    <form method="post">
+        <input name="email" placeholder="Email" class="form-control mb-3" />
+        <input name="password" type="password" placeholder="Password" class="form-control mb-3" />
+
+        <button class="btn btn-primary w-100">Login</button>
+
+        <div class="text-center mt-3">
+            Don’t have an account?
+            <a href="/Account/Register">Register</a>
+        </div>
+    </form>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger mt-3 text-center">
+            @ViewBag.Error
+        </div>
+    }
+
+</div>

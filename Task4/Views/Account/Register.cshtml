@@ -1,0 +1,55 @@
+﻿@{
+    ViewBag.Title = "Register";
+}
+
+<div class="auth-card">
+
+    <h4 class="text-center mb-4">Register</h4>
+
+    @if (TempData["msg"] != null)
+    {
+        <div class="alert alert-success text-center">
+            @TempData["msg"]
+        </div>
+    }
+
+    <form method="post">
+
+        <input name="name" placeholder="Name" class="form-control mb-3" />
+        <input name="email" placeholder="Email" class="form-control mb-3" />
+        <input name="password" type="password" placeholder="Password" class="form-control mb-3" />
+
+        <button class="btn btn-primary w-100">Register</button>
+
+        <div class="text-center mt-3">
+            Already have an account?
+            <a href="/Account/Login">Login</a>
+        </div>
+
+    </form>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger mt-3 text-center">
+            @ViewBag.Error
+        </div>
+    }
+
+    @if (ViewBag.Success != null)
+    {
+        <div class="alert alert-success mt-3 text-center">
+            @ViewBag.Success
+        </div>
+    }
+
+    @if (ViewBag.ConfirmLink != null)
+    {
+        <div class="alert alert-info mt-3">
+            Confirm your email:
+            <div class="mt-2">
+                <a href="@ViewBag.ConfirmLink">@ViewBag.ConfirmLink</a>
+            </div>
+        </div>
+    }
+
+</div>

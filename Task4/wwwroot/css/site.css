@@ -1,0 +1,88 @@
+/* Общая типографика */
+body {
+    font-size: 15px;
+    background: #f8f9fa;
+    color: #212529;
+}
+
+/* Заголовки */
+h3 {
+    font-weight: 600;
+}
+
+/* Карточки */
+.card {
+    border-radius: 10px;
+    border: none;
+}
+
+/* Таблица */
+.table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .table th {
+        font-weight: 600;
+        background: #f1f3f5;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+/* Toolbar */
+.toolbar {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+    .toolbar-btn:hover {
+        background: #eef1f4;
+    }
+
+/* Статусы */
+.status-active {
+    color: #198754;
+    font-weight: 600;
+}
+
+.status-blocked {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.status-unverified {
+    color: #fd7e14;
+    font-weight: 600;
+}
+
+/* Формы login/register */
+.auth-card {
+    max-width: 420px;
+    margin: auto;
+    margin-top: 80px;
+    padding: 25px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+/* Pagination */
+.pagination-bar {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
